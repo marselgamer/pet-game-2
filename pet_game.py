@@ -4,15 +4,36 @@ import json
 import os
 import random
 import string
+from tkinter import ttk
 
 class PetGame:
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("Pet Game")
-        self.window.geometry("400x600")
+        
+        # Get screen dimensions
+        self.screen_width = self.window.winfo_screenwidth()
+        self.screen_height = self.window.winfo_screenheight()
+        
+        # Set window to fullscreen
+        self.window.state('zoomed')  # This makes the window maximized
+        
+        # Set up the gradient background
+        self.canvas = tk.Canvas(self.window, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+        
+        # Create gradient background
+        self.update_background()
+        
+        # Bind window resize event
+        self.window.bind('<Configure>', self.on_window_resize)
+        
+        # Create main frame with transparent background
+        self.main_frame = tk.Frame(self.window)
+        self.main_frame.place(relx=0.5, rely=0.5, anchor="center")
         
         self.pet = {
-            "name": "Buddy",  # Default pet name
+            "name": "Buddy",
             "happiness": 100,
             "hunger": 0,
             "energy": 100
@@ -20,60 +41,109 @@ class PetGame:
         
         self.setup_ui()
         
+    def on_window_resize(self, event):
+        # Update background when window is resized
+        self.update_background()
+        
+    def update_background(self):
+        # Clear existing background
+        self.canvas.delete("all")
+        
+        # Get current window size
+        width = self.window.winfo_width()
+        height = self.window.winfo_height()
+        
+        # Create gradient background
+        for i in range(height):
+            # Calculate color values for gradient
+            r = 0
+            g = int(100 + (i/height) * 155)
+            b = int(200 + (i/height) * 55)
+            color = f'#{r:02x}{g:02x}{b:02x}'
+            self.canvas.create_line(0, i, width, i, fill=color)
+        
+    def create_styled_button(self, parent, text, command):
+        style = ttk.Style()
+        style.configure('Custom.TButton', 
+                       font=('Arial', 12, 'bold'),
+                       padding=10)
+        return ttk.Button(parent, text=text, command=command, style='Custom.TButton')
+        
     def setup_ui(self):
         # Pet name label
-        self.name_label = tk.Label(self.window, text=f"Pet Name: {self.pet['name']}", font=("Arial", 14))
-        self.name_label.pack(pady=10)
+        self.name_label = tk.Label(self.main_frame, 
+                                 text=f"Pet Name: {self.pet['name']}", 
+                                 font=("Arial", 16, "bold"),
+                                 fg='black')
+        self.name_label.pack(pady=15)
         
         # Stats labels
-        self.stats_frame = tk.Frame(self.window)
-        self.stats_frame.pack(pady=10)
+        self.stats_frame = tk.Frame(self.main_frame)
+        self.stats_frame.pack(pady=15)
         
-        self.happiness_label = tk.Label(self.stats_frame, text="Happiness: 100")
-        self.happiness_label.grid(row=0, column=0, padx=5)
+        self.happiness_label = tk.Label(self.stats_frame, 
+                                      text="Happiness: 100",
+                                      font=("Arial", 12),
+                                      fg='black')
+        self.happiness_label.grid(row=0, column=0, padx=10)
         
-        self.hunger_label = tk.Label(self.stats_frame, text="Hunger: 0")
-        self.hunger_label.grid(row=0, column=1, padx=5)
+        self.hunger_label = tk.Label(self.stats_frame, 
+                                   text="Hunger: 0",
+                                   font=("Arial", 12),
+                                   fg='black')
+        self.hunger_label.grid(row=0, column=1, padx=10)
         
-        self.energy_label = tk.Label(self.stats_frame, text="Energy: 100")
-        self.energy_label.grid(row=0, column=2, padx=5)
+        self.energy_label = tk.Label(self.stats_frame, 
+                                   text="Energy: 100",
+                                   font=("Arial", 12),
+                                   fg='black')
+        self.energy_label.grid(row=0, column=2, padx=10)
         
         # Buttons frame
-        self.button_frame = tk.Frame(self.window)
+        self.button_frame = tk.Frame(self.main_frame)
         self.button_frame.pack(pady=20)
         
         # Action buttons
-        tk.Button(self.button_frame, text="Play", command=self.play).grid(row=0, column=0, padx=5)
-        tk.Button(self.button_frame, text="Feed", command=self.feed).grid(row=0, column=1, padx=5)
-        tk.Button(self.button_frame, text="Sleep", command=self.sleep).grid(row=0, column=2, padx=5)
+        self.create_styled_button(self.button_frame, "Play", self.play).grid(row=0, column=0, padx=10)
+        self.create_styled_button(self.button_frame, "Feed", self.feed).grid(row=0, column=1, padx=10)
+        self.create_styled_button(self.button_frame, "Sleep", self.sleep).grid(row=0, column=2, padx=10)
         
         # Save/Load frame
-        self.save_frame = tk.Frame(self.window)
-        self.save_frame.pack(pady=10)
+        self.save_frame = tk.Frame(self.main_frame)
+        self.save_frame.pack(pady=15)
         
         # Save code display
-        self.save_code_label = tk.Label(self.save_frame, text="Save Code: None", font=("Arial", 12))
-        self.save_code_label.pack(pady=5)
+        self.save_code_label = tk.Label(self.save_frame, 
+                                      text="Save Code: None", 
+                                      font=("Arial", 14, "bold"),
+                                      fg='black')
+        self.save_code_label.pack(pady=10)
         
         # Save button
-        tk.Button(self.save_frame, text="Generate Save Code", command=self.save_game).pack(pady=5)
+        self.create_styled_button(self.save_frame, "Generate Save Code", self.save_game).pack(pady=10)
         
         # Load frame
-        self.load_frame = tk.Frame(self.window)
-        self.load_frame.pack(pady=10)
+        self.load_frame = tk.Frame(self.main_frame)
+        self.load_frame.pack(pady=15)
         
         # Load code entry
-        self.load_label = tk.Label(self.load_frame, text="Enter Save Code:", font=("Arial", 10))
-        self.load_label.pack(pady=2)
+        self.load_label = tk.Label(self.load_frame, 
+                                 text="Enter Save Code:", 
+                                 font=("Arial", 12),
+                                 fg='black')
+        self.load_label.pack(pady=5)
         
-        self.code_entry = tk.Entry(self.load_frame, width=10, font=("Arial", 12))
-        self.code_entry.pack(pady=2)
+        self.code_entry = tk.Entry(self.load_frame, 
+                                 width=15, 
+                                 font=("Arial", 14),
+                                 justify='center')
+        self.code_entry.pack(pady=5)
         
         # Load button
-        tk.Button(self.load_frame, text="Load Game", command=self.load_game).pack(pady=5)
+        self.create_styled_button(self.load_frame, "Load Game", self.load_game).pack(pady=10)
         
         # Reset Game button
-        tk.Button(self.window, text="Reset Game", command=self.reset_game).pack(pady=5)
+        self.create_styled_button(self.main_frame, "Reset Game", self.reset_game).pack(pady=15)
         
     def update_labels(self):
         self.name_label.config(text=f"Pet Name: {self.pet['name']}")
@@ -82,7 +152,6 @@ class PetGame:
         self.energy_label.config(text=f"Energy: {self.pet['energy']}")
         
     def generate_save_code(self):
-        # Generate a random 6-character code using letters and numbers
         characters = string.ascii_lowercase + string.digits
         return ''.join(random.choice(characters) for _ in range(6))
         
@@ -109,7 +178,6 @@ class PetGame:
             'pet': self.pet
         }
         
-        # Save to a file with the code as the filename
         with open(f'save_{save_code}.json', 'w') as f:
             json.dump(save_data, f)
             
@@ -129,7 +197,7 @@ class PetGame:
                     self.pet = save_data['pet']
                     self.update_labels()
                     self.save_code_label.config(text=f"Save Code: {save_code}")
-                    self.code_entry.delete(0, tk.END)  # Clear the entry field
+                    self.code_entry.delete(0, tk.END)
                     messagebox.showinfo("Success", "Game loaded successfully!")
                 else:
                     messagebox.showerror("Error", "Invalid save code!")
@@ -144,7 +212,7 @@ class PetGame:
             "energy": 100
         }
         self.save_code_label.config(text="Save Code: None")
-        self.code_entry.delete(0, tk.END)  # Clear the entry field
+        self.code_entry.delete(0, tk.END)
         self.update_labels()
         messagebox.showinfo("Success", "Game reset successfully!")
             
